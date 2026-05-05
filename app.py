@@ -12,7 +12,7 @@ def _t(key, default):
     h, m = os.getenv(key, default).split(':')
     return dtime(int(h), int(m))
 
-LUNCHBUS_API = 'https://data.hunter-crm.com/HunterGPS/index.php?id=Lunch_3'
+LUNCHBUS_API = f'https://data.hunter-crm.com/HunterGPS/index.php?id=Lunch_{os.getenv("BUS_NUMBER", "3")}'
 COORD_PATTERN = re.compile(r'var marker = L\.marker\(\[(\d+\.\d+),\s*(\d+\.\d+)\]')
 REFRESH_SECONDS = int(os.getenv('REFRESH_SECONDS', '15'))
 ACTIVE_START = _t('ACTIVE_START', '12:00')
