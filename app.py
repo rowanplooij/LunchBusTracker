@@ -48,6 +48,7 @@ ALERT_END = _t('ALERT_END', '12:45')
 ARRIVAL_RADIUS_M = int(os.getenv('ARRIVAL_RADIUS_M', '100'))
 
 notified_today = False
+bus_in_zone = False
 _tick = 0
 
 def haversine(lat1, lon1, lat2, lon2):
@@ -74,6 +75,9 @@ async def set_icons():
                             iconSize: [100, 50],
                             iconAnchor: [50, 25]
                         }}));
+                        layer.on('click', function() {{
+                            window.open('https://www.lunchbus.nl/product-categorie/lunch/', '_blank');
+                        }});
                     }} else if (i === 1) {{
                         layer.setIcon(L.icon({{
                             iconUrl: '/images/copernicus.webp',
@@ -100,7 +104,9 @@ def update_countdown():
     now = datetime.now()
     lunch = now.replace(hour=12, minute=30, second=0, microsecond=0)
     delta_s = (lunch - now).total_seconds()
-    if ALERT_START <= now.time() <= ALERT_END:
+    if notified_today and not bus_in_zone:
+        countdown.set_text('You missed the bus! 🚌💨')
+    elif ALERT_START <= now.time() <= ALERT_END:
         countdown.set_text('🍽️ Bus expected now!')
     elif 0 < delta_s <= 3600:
         countdown.set_text(f'🕐 Bus in ~{int(delta_s / 60)} min')
@@ -108,7 +114,7 @@ def update_countdown():
         countdown.set_text('')
 
 def update():
-    global notified_today, _tick
+    global notified_today, bus_in_zone, _tick
     _tick += 1
     now = datetime.now().time()
 
@@ -130,7 +136,8 @@ def update():
         now = datetime.now().time()
         if ALERT_START <= now <= ALERT_END:
             dist = haversine(loc[0], loc[1], *COPERNICUS)
-            if dist <= ARRIVAL_RADIUS_M and not notified_today:
+            bus_in_zone = dist <= ARRIVAL_RADIUS_M
+            if bus_in_zone and not notified_today:
                 notified_today = True
                 ui.run_javascript('''
                     Notification.requestPermission().then(p => {
@@ -153,6 +160,7 @@ def update():
                 ''')
         else:
             notified_today = False
+            bus_in_zone = False
     else:
         status.set_text('Could not fetch location')
 
