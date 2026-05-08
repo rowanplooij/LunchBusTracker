@@ -98,7 +98,7 @@ async def set_icons():
         }}
     ''')
 
-ui.timer(0.5, set_icons, once=True)
+app.on_connect(lambda: ui.timer(0.5, set_icons, once=True))
 
 def update_countdown():
     now = datetime.now()
@@ -118,11 +118,8 @@ def update():
     _tick += 1
     now = datetime.now().time()
 
-    if not (ACTIVE_START <= now <= ACTIVE_END):
-        update_countdown()
-        return
-
-    high_freq = HIGH_FREQ_START <= now <= ALERT_END and not notified_today
+    in_active_window = ACTIVE_START <= now <= ACTIVE_END
+    high_freq = in_active_window and HIGH_FREQ_START <= now <= ALERT_END and not notified_today
     if not high_freq and _tick % 2 != 0:
         update_countdown()
         return
@@ -134,7 +131,7 @@ def update():
         status.set_text(f'Last update: {loc[0]:.5f}, {loc[1]:.5f}')
 
         now = datetime.now().time()
-        if ALERT_START <= now <= ALERT_END:
+        if in_active_window and ALERT_START <= now <= ALERT_END:
             dist = haversine(loc[0], loc[1], *COPERNICUS)
             bus_in_zone = dist <= ARRIVAL_RADIUS_M
             if bus_in_zone and not notified_today:
